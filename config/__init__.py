@@ -798,7 +798,7 @@ class Config():
                     supervisorConfigParam = {}
                     supervisorConfigParam['autostart'] = odr['autostart']
                     supervisorConfigParam['autorestart'] = "true"
-                    supervisorCofngiParam['startretries'] = "20000"
+                    supervisorConfigParam['startretries'] = "20000"
                     supervisorConfigParam['priority'] = "10"
                     supervisorConfigParam['user'] = "odr"
                     supervisorConfigParam['group'] = "odr"
@@ -823,7 +823,7 @@ class Config():
                     # hack to make MPEG-DASH / HLS files stream using ffmpeg
                     if odr['source']['stream_url'][-5:] == ".m3u8":
                         m3u8 = True
-                        command = 'bash -c "ffmpeg -i %s -f wav -ar 48000 pipe:1 | %s -i - \n' % (odr['source']['stream_url'],odr['path']['encoder_path'])
+                        command = 'bash -c "ffmpeg -i %s -f wav -ar 48000 pipe:1 | %s -i - -f raw \n' % (odr['source']['stream_url'],odr['path']['encoder_path'])
                 if odr['source']['type'] == 'avt':
                     command = '%s\n' % (odr['path']['sourcecompanion_path'])
 
@@ -921,7 +921,7 @@ class Config():
                     command += ' --timestamp-delay=%s\n' % (odr['output']['edi_timestamps_delay'])
 
                 if m3u8 == True:
-                    command += '"' # terminates the bash command
+                    command += ' "\n' # terminates the bash command
 
                 supervisorConfig += "# %s\n" % (odr['name'])
                 supervisorConfig += "[program:odr-audioencoder-%s]\n" % (odr['uniq_id'])
@@ -931,7 +931,7 @@ class Config():
                 supervisorConfigParam = {}
                 supervisorConfigParam['autostart'] = odr['autostart']
                 supervisorConfigParam['autorestart'] = "true"
-                supervisorCofngiParam['startretries'] = "20000"
+                supervisorConfigParam['startretries'] = "20000"
                 supervisorConfigParam['priority'] = "10"
                 supervisorConfigParam['user'] = "odr"
                 supervisorConfigParam['group'] = "odr"
