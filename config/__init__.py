@@ -798,6 +798,7 @@ class Config():
                     supervisorConfigParam = {}
                     supervisorConfigParam['autostart'] = odr['autostart']
                     supervisorConfigParam['autorestart'] = "true"
+                    supervisorCofngiParam['startretries'] = "20000"
                     supervisorConfigParam['priority'] = "10"
                     supervisorConfigParam['user'] = "odr"
                     supervisorConfigParam['group'] = "odr"
@@ -816,15 +817,20 @@ class Config():
 
                 # Write supervisor audioencoder section
                 # Encoder path
+                m3u8 = False
                 if odr['source']['type'] == 'alsa' or odr['source']['type'] == 'stream' or odr['source']['type'] == 'aes67':
                     command = '%s\n' % (odr['path']['encoder_path'])
+                    # hack to make MPEG-DASH / HLS files stream using ffmpeg
+                    if odr['source']['stream_url'][-5:] == ".m3u8":
+                        m3u8 = True
+                        command = 'bash -c "ffmpeg -i %s -f wav -ar 48000 pipe:1 | %s -i - \n' % (odr['source']['stream_url'],odr['path']['encoder_path'])
                 if odr['source']['type'] == 'avt':
                     command = '%s\n' % (odr['path']['sourcecompanion_path'])
 
                 # Input stream
                 if odr['source']['type'] == 'alsa':
                     command += ' --device %s\n' % (odr['source']['alsa_device'])
-                if odr['source']['type'] == 'stream':
+                if odr['source']['type'] == 'stream' and m3u8 == False:
                     if odr['source']['stream_lib'] == 'vlc':
                         command += ' --vlc-uri=%s\n' % (odr['source']['stream_url'])
                     if odr['source']['stream_lib'] == 'gst':
@@ -914,6 +920,9 @@ class Config():
                 if 'edi_timestamps_delay' in odr['output'] and odr['output']['edi_timestamps_delay'] != '':
                     command += ' --timestamp-delay=%s\n' % (odr['output']['edi_timestamps_delay'])
 
+                if m3u8 == True:
+                    command += '"' # terminates the bash command
+
                 supervisorConfig += "# %s\n" % (odr['name'])
                 supervisorConfig += "[program:odr-audioencoder-%s]\n" % (odr['uniq_id'])
                 supervisorConfig += "command=%s" % (command)
@@ -922,6 +931,7 @@ class Config():
                 supervisorConfigParam = {}
                 supervisorConfigParam['autostart'] = odr['autostart']
                 supervisorConfigParam['autorestart'] = "true"
+                supervisorCofngiParam['startretries'] = "20000"
                 supervisorConfigParam['priority'] = "10"
                 supervisorConfigParam['user'] = "odr"
                 supervisorConfigParam['group'] = "odr"
