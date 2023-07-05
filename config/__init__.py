@@ -817,10 +817,12 @@ class Config():
 
                 # Write supervisor audioencoder section
                 # Encoder path
+                m3u8 = False
                 if odr['source']['type'] == 'alsa' or odr['source']['type'] == 'stream' or odr['source']['type'] == 'aes67':
                     command = '%s\n' % (odr['path']['encoder_path'])
                     # hack to make MPEG-DASH / HLS files stream using ffmpeg
                     if odr['source']['stream_url'][-5:] == ".m3u8":
+                        m3u8 = True
                         command = 'ffmpeg -i %s -f wav -ar 48000 pipe:1 | %s -i - -f raw \n' % (odr['source']['stream_url'],odr['path']['encoder_path'])
                 if odr['source']['type'] == 'avt':
                     command = '%s\n' % (odr['path']['sourcecompanion_path'])
