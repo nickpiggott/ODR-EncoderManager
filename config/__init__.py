@@ -817,22 +817,20 @@ class Config():
 
                 # Write supervisor audioencoder section
                 # Encoder path
-                m3u8 = False
                 if odr['source']['type'] == 'alsa' or odr['source']['type'] == 'stream' or odr['source']['type'] == 'aes67':
                     command = '%s\n' % (odr['path']['encoder_path'])
-                    # hack to make MPEG-DASH / HLS files stream using ffmpeg
-                    if odr['source']['stream_url'][-5:] == ".m3u8":
-                        m3u8 = True
-                        command = 'bash -c "ffmpeg -i %s -f wav -ar 48000 pipe:1 | %s -i - -f raw ' % (odr['source']['stream_url'],odr['path']['encoder_path'])
                 if odr['source']['type'] == 'avt':
                     command = '%s\n' % (odr['path']['sourcecompanion_path'])
 
                 # Input stream
                 if odr['source']['type'] == 'alsa':
                     command += ' --device %s\n' % (odr['source']['alsa_device'])
-                if odr['source']['type'] == 'stream' and m3u8 == False:
+                if odr['source']['type'] == 'stream':
                     if odr['source']['stream_lib'] == 'vlc':
                         command += ' --vlc-uri=%s\n' % (odr['source']['stream_url'])
+                        # hack to make MPEG-DASH / HLS files stream by increasing network caching and audio gain
+                        if odr['source']['stream_url'][-5:] == ".m3u8":
+                            command += ' -L network-caching=4000\n'
                     if odr['source']['stream_lib'] == 'gst':
                         command += ' --gst-uri=%s\n' % (odr['source']['stream_url'])
                 if odr['source']['type'] == 'aes67':
@@ -855,42 +853,42 @@ class Config():
 
                 # driftcomp for alsa or stream or aes input type only
                 if ( odr['source']['type'] == 'alsa' or odr['source']['type'] == 'stream' or odr['source']['type'] == 'aes67' ) and odr['source']['driftcomp'] == 'true':
-                    command += ' --drift-comp'
+                    command += ' --drift-comp\n'
 
                 # silence restart for alsa or stream or aes input type only
                 if ( odr['source']['type'] == 'alsa' or odr['source']['type'] == 'stream' or odr['source']['type'] == 'aes67' ) and odr['source']['silence_detect'] == 'true' and odr['source']['silence_duration'] != '' and int(odr['source']['silence_duration']) >> 0:
-                    command += ' --silence=%s' % (odr['source']['silence_duration'])
+                    command += ' --silence=%s\n' % (odr['source']['silence_duration'])
 
                 # bitrate, samplerate, channels for all input type
-                command += ' --bitrate=%s' % (odr['output']['bitrate'])
-                command += ' --rate=%s' % (odr['output']['samplerate'])
-                command += ' --channels=%s' % (odr['output']['channels'])
+                command += ' --bitrate=%s\n' % (odr['output']['bitrate'])
+                command += ' --rate=%s\n' % (odr['output']['samplerate'])
+                command += ' --channels=%s\n' % (odr['output']['channels'])
 
                 # DAB specific option only for alsa or stream or aes input type
                 if ( odr['source']['type'] == 'alsa' or odr['source']['type'] == 'stream' or odr['source']['type'] == 'aes67' ) and odr['output']['type'] == 'dab':
-                    command += ' --dab'
-                    command += ' --dabmode=%s' % (odr['output']['dab_dabmode'])
-                    command += ' --dabpsy=%s' % (odr['output']['dab_dabpsy'])
+                    command += ' --dab\n'
+                    command += ' --dabmode=%s\n' % (odr['output']['dab_dabmode'])
+                    command += ' --dabpsy=%s\n' % (odr['output']['dab_dabpsy'])
 
                 # DAB+ specific option for all input type
                 if odr['output']['type'] == 'dabp':
                     if odr['output']['dabp_sbr'] == 'true':
-                        command += ' --sbr'
+                        command += ' --sbr\n'
                     if odr['output']['dabp_ps'] == 'true':
-                        command += ' --ps'
+                        command += ' --ps\n'
                     if odr['output']['dabp_sbr'] == 'false' and odr['output']['dabp_ps'] == 'false':
-                        command += ' --aaclc'
+                        command += ' --aaclc\n'
                     ## Disable afterburner only for alsa or stream or aes input type
                     if ( odr['source']['type'] == 'alsa' or odr['source']['type'] == 'stream' or odr['source']['type'] == 'aes67' ) and odr['output']['dabp_afterburner'] == 'false':
-                        command += ' --no-afterburner'
+                        command += ' --no-afterburner\n'
 
                 # PAD encoder
                 if odr['padenc']['enable'] == 'true':
-                    command += ' --pad=%s' % (odr['padenc']['pad'])
-                    command += ' --pad-socket=%s' % (odr['uniq_id'])
+                    command += ' --pad=%s\n' % (odr['padenc']['pad'])
+                    command += ' --pad-socket=%s\n' % (odr['uniq_id'])
                     # Write icy-text only for stream input type and if writeicytext is true
                     if odr['source']['type'] == 'stream' and odr['source']['stream_writeicytext'] == 'true':
-                        command += ' --write-icy-text=%s' % (odr['padenc']['dls_file'])
+                        command += ' --write-icy-text=%s\n' % (odr['padenc']['dls_file'])
 
                 # AVT input type specific option
                 if odr['source']['type'] == 'avt':
@@ -905,23 +903,20 @@ class Config():
                 for out in odr['output']['output']:
                     if out['enable'] == 'true':
                         if out['type'] == 'zmq':
-                            command += ' -o tcp://%s:%s' % (out['host'], out['port'])
+                            command += ' -o tcp://%s:%s\n' % (out['host'], out['port'])
                         if out['type'] == 'editcp':
-                            command += ' -e tcp://%s:%s' % (out['host'], out['port'])
+                            command += ' -e tcp://%s:%s\n' % (out['host'], out['port'])
 
                 # Stats socket
                 if odr['source']['stats_socket'] != '':
-                    command += ' --stats=%s' % (odr['source']['stats_socket'])
+                    command += ' --stats=%s\n' % (odr['source']['stats_socket'])
                 
                 # EDI specific
                 if 'edi_identifier' in odr['output'] and odr['output']['edi_identifier'] != '':
-                    command += ' --identifier=%s' % (odr['output']['edi_identifier'])
+                    command += ' --identifier=%s\n' % (odr['output']['edi_identifier'])
                 
                 if 'edi_timestamps_delay' in odr['output'] and odr['output']['edi_timestamps_delay'] != '':
-                    command += ' --timestamp-delay=%s' % (odr['output']['edi_timestamps_delay'])
-
-                if m3u8 == True:
-                    command += '"'
+                    command += ' --timestamp-delay=%s\n' % (odr['output']['edi_timestamps_delay'])
 
                 supervisorConfig += "# %s\n" % (odr['name'])
                 supervisorConfig += "[program:odr-audioencoder-%s]\n" % (odr['uniq_id'])
@@ -931,8 +926,6 @@ class Config():
                 supervisorConfigParam = {}
                 supervisorConfigParam['autostart'] = odr['autostart']
                 supervisorConfigParam['autorestart'] = "true"
-                if m3u8 == True:
-                    supervisorConfigParam['stopasgroup'] = "true"
                 supervisorConfigParam['startretries'] = "20000"
                 supervisorConfigParam['priority'] = "10"
                 supervisorConfigParam['user'] = "odr"
