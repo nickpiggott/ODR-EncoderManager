@@ -920,7 +920,7 @@ class Config():
 
                 supervisorConfig += "# %s\n" % (odr['name'])
                 supervisorConfig += "[program:odr-audioencoder-%s]\n" % (odr['uniq_id'])
-                supervisorConfig += "command=%s\n" % (command)
+                supervisorConfig += "command=%s" % (command)
                 
                 # -- default parameters
                 supervisorConfigParam = {}
