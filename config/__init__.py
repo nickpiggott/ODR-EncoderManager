@@ -931,6 +931,8 @@ class Config():
                 supervisorConfigParam = {}
                 supervisorConfigParam['autostart'] = odr['autostart']
                 supervisorConfigParam['autorestart'] = "true"
+                if m3u8 == True:
+                    supervisorConfigParam['stopasgroup'] = "true"
                 supervisorConfigParam['startretries'] = "20000"
                 supervisorConfigParam['priority'] = "10"
                 supervisorConfigParam['user'] = "odr"
